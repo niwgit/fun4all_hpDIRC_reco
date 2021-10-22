@@ -44,22 +44,24 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   int nEvents = prt_ch->GetEntries();
   //std::cout << "Entries = " << nEvents << std::endl;
   
-  int hit_size, Particle_id;
-  Double_t theta_ang;
+  int hit_size = 0;
+  int Particle_id = 0;
+  Double_t theta_ang = 0.;
+
+  const int arr_size = 500;
+
+  int mcp_num[arr_size], pixel_id[arr_size];
+  Double_t lead_time[arr_size];
 
   prt_ch->SetBranchAddress("nhits", &hit_size);
   prt_ch->SetBranchAddress("pid", &Particle_id);
-  prt_ch->SetBranchAddress("theta", &theta_ang);
-
-  int mcp_num[hit_size], pixel_id[hit_size];
-  Double_t lead_time[hit_size];
-  
+  prt_ch->SetBranchAddress("theta", &theta_ang);  
   prt_ch->SetBranchAddress("mcp_id", &mcp_num);
   prt_ch->SetBranchAddress("pixel_id", &pixel_id);  
   prt_ch->SetBranchAddress("lead_time", &lead_time);
   
   int printstep=100;
-  double time;
+  double time = 0;
   double nph[5]={0};
   int tnph(0),totalf(0),totals(0), ch(0);
   

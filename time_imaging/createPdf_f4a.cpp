@@ -17,21 +17,25 @@ void createPdf_f4a(TString in="G4DIRCTree.root", int pid=321)
   int nEvents = prt_ch->GetEntries();
   //std::cout << "Entries = " << nEvents << std::endl;
 
-  int hit_size, Particle_id;
+  const int arr_size = 500;
+
+  int hit_size = 0;
+  int Particle_id = 0;
+
   prt_ch->SetBranchAddress("nhits", &hit_size);
   prt_ch->SetBranchAddress("pid", &Particle_id);
 
-  int mcp_num[hit_size], pixel_id[hit_size];
-  Double_t lead_time[hit_size];
+  int mcp_num[arr_size], pixel_id[arr_size];
+  Double_t lead_time[arr_size];
   
   prt_ch->SetBranchAddress("mcp_id", &mcp_num);
   prt_ch->SetBranchAddress("pixel_id", &pixel_id);
   prt_ch->SetBranchAddress("lead_time", &lead_time);
   
   int printstep = 100;
-  double time;
+  double time = 0;
  
-  int pdg(0), totalf(0),totals(0), ch;
+  int pdg(0), totalf(0),totals(0), ch(0);
  
  for (int ievent=0; ievent < nEvents; ievent++)
    { 
