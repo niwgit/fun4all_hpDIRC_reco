@@ -15,7 +15,7 @@ void createPdf_f4a(TString in="G4DIRCTree.root", int pid=321)
   prt_ch = new TChain("mG4EvtTree");
   prt_ch->Add(in);
   int nEvents = prt_ch->GetEntries();
-  //std::cout << "Entries = " << nEvents << std::endl;
+  std::cout << "Entries = " << nEvents << std::endl;
 
   const int arr_size = 500;
 
@@ -32,7 +32,7 @@ void createPdf_f4a(TString in="G4DIRCTree.root", int pid=321)
   prt_ch->SetBranchAddress("pixel_id", &pixel_id);
   prt_ch->SetBranchAddress("lead_time", &lead_time);
   
-  int printstep = 100;
+  int printstep = 2000;
   double time = 0;
  
   int pdg(0), totalf(0),totals(0), ch(0);
@@ -42,8 +42,9 @@ void createPdf_f4a(TString in="G4DIRCTree.root", int pid=321)
      prt_ch->GetEntry(ievent);
      pdg = Particle_id;
   
-     if((pdg == 211 && ievent < 500) || (pdg == 321 && ievent < 1500)) continue;
-  
+     //if((pdg == 211 && ievent < 500) || (pdg == 321 && ievent < 1500)) continue;
+     if((pdg == 211 && ievent < 5000) || (pdg == 321 && ievent < 25000)) continue; 
+
      int nHits = hit_size;
      if(ievent%printstep==0 && ievent!=0) std::cout << "Event # " << ievent << " # hits "<< nHits << std::endl;
 
