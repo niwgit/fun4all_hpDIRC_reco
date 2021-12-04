@@ -1,4 +1,4 @@
-#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
+#include "../prttools/prttools.cpp"
 #include <TVirtualFitter.h>
 #include <TKey.h>
 #include <TRandom.h>
