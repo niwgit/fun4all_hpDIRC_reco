@@ -1,4 +1,4 @@
-#include "../prttools/prttools.cpp"
+#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
 #include <TVirtualFitter.h>
 #include <TKey.h>
 #include <TRandom.h>
@@ -16,7 +16,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   TH1F *hl[5],*hll[5],*hnph[5];
   for(int i=0; i<5; i++){
     hl[i] = new TH1F(Form("hl_%d",i),";LE time [ns]; entries [#]", 2000,0,100);    
-    hll[i]= new TH1F(Form("ll_i%d",i),";ln L("+prt_lname[pid]+") - ln L(#pi); entries [#]",240,-60,60);
+    hll[i]= new TH1F(Form("ll_i%d",i),";ln L("+prt_lname[pid]+") - ln L(#pi); entries [#]",320,-80,80);
     hnph[i] = new TH1F(Form("hnph_%d",i),";multiplicity [#]; entries [#]", 200,0,200);
     hnph[i]->SetLineColor(prt_color[i]);
     hll[i]->SetLineColor(prt_color[i]);
@@ -35,8 +35,8 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
     if(rebin >0) hpdfs[i]->Rebin(rebin);
     integ1+= hpdff[i]->Integral();
     integ2+= hpdfs[i]->Integral();
-    // hpdff[i]->Smooth(1);
-    // hpdfs[i]->Smooth(1);
+    //hpdff[i]->Smooth(1);
+    //hpdfs[i]->Smooth(1);
   }
 
   prt_ch = new TChain("mG4EvtTree");
@@ -112,8 +112,9 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   
   gStyle->SetOptStat(0);
 
-  TString name = Form("%1.2f_%1.2f_pik_6GeV_f4a",prt_theta,timeres);
-  
+  //TString name = Form("%1.2f_%1.2f_pik_6GeV_f4a",prt_theta,timeres);
+  TString name = "pik_6GeV_f4a";
+
   prt_canvasAdd("nph_"+name,800,400);
   for(int i=0; i<5; i++)
     {
