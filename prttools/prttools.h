@@ -25,7 +25,7 @@
 #include "TColor.h"
 #include "TString.h"
 #include "TArrayD.h"
-//#include "TSpectrum.h"
+#include "TSpectrum.h"
 #include "TSpectrum2.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
