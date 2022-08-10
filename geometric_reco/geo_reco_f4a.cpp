@@ -1,16 +1,17 @@
-#include "geo_reco_f4a.h"
+#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a.h"
 #include <iostream>
-#include "../prttools/prttools.cpp"
+#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
 
 using namespace std;
 
 TGraph gg_gr;
 
-void geo_reco_f4a(TString infile, TString lutfile, int verbose)
+void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 {
   fVerbose = verbose;
 
-  gROOT->ProcessLine(".L PrtLutNode.cxx+");
+  //gROOT->ProcessLine(".L PrtLutNode.cxx+");
+  gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
 
   TH1F*  fHist1 = new TH1F("Time1","1", 1000,0,20);
   TH1F*  fHist2 = new TH1F("Time2","2", 1000,-10,10);
@@ -24,12 +25,13 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
   TH2F*  fdtt = new TH2F("dtt",";t_{measured}-t_{calculated} [ns];#theta_{l} [deg]", 1000,-2,2, 1000,0,90);
   TH2F*  fdtl = new TH2F("dtl",";t_{measured}-t_{calculated} [ns];path length [m]", 1000,-2,2, 1000,0,15);
   TH2F*  fdtp = new TH2F("dtp",";#theta_{l} [deg];path length [m]", 1000,0,90, 1000,0,15);
-  TH2F*  fhChrom = new TH2F("chrom",";t_{measured}-t_{calculated} [ns];#theta_{C} [rad]", 100,-2,2, 100,-30,30);
-  TH2F*  fhChromL = new TH2F("chroml",";(t_{measured}-t_{calculated})/L_{path};#theta_{C} [rad]", 100,-0.0002,0.0002, 100,-30,30);
+  TH2F*  fhChrom = new TH2F("chrom",";t_{measured}-t_{calculated} [ns];#Delta#theta_{C} [mrad]", 100,-2,2, 100,-30,30);
+  TH2F*  fhChromL = new TH2F("chroml",";(t_{measured}-t_{calculated})/L_{path};#Delta#theta_{C} [mrad]", 100,-0.0002,0.0002, 100,-30,30);
   TH1F*  fHistMcp[28];
   double fCorr[28];
 
   TH1F* Hist_lut_theta = new TH1F("lut_theta","lut theta (rad)", 100, -TMath::Pi(), TMath::Pi());
+  //TF1* chrom_func = new TF1("chrom_func","0.02619 + (-0.000592973)*x + (4.05258e-06)*x*x + (1.15741e-09)*x*x*x",20,150);
 
   int gg_i(0);
   
@@ -45,6 +47,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
   fFit = new TF1("fgaus","[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2]) +[3]",0.35,0.9);
   fSpect = new TSpectrum(10);
   fMethod = 2;
+  fCriticalAngle = asin(1.00028/1.47125); // n_quarzt = 1.47125; //(1.47125 <==> 390nm) 
 
   int col[]={kRed+1,kBlue+1,kBlack};
   for(int i=0; i<3; i++){
@@ -191,7 +194,6 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 
 
   for (int ievent=0; ievent < nEvents; ievent++){
-  //for (int ievent=0; ievent < 1; ievent++){  
     fChain->GetEntry(ievent);
     int nHits = hit_size;  
     if(ievent%1000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
@@ -200,6 +202,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
     ntotal+=nHits;
     prt_theta = theta;
     mom = TMath::Sqrt(px*px + py*py + pz*pz);
+    //double corr_coeff = chrom_func->Eval(theta);
     
     tofPid = Particle_id;
     int pid = prt_get_pid(tofPid);
@@ -218,7 +221,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
  
     if(fSigma<0.003) fSigma=0.007;  
 
-    if(ievent==0){
+    if(ievent==1){
       double range = 160;
       if(mom>1.5) range = 100;
       if(mom>2) range = 60;
@@ -231,6 +234,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
       
       for(int h=0; h<5; h++){
 	fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",100,-range,range);
+	//fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",100,-60,60);
 	fLnDiff[h]->SetLineColor(prt_color[h]);
 	}
     }
@@ -246,12 +250,12 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
     for(int h=0; h < nHits; h++)
       {      
 	hitTime = lead_time[h] + prt_rand.Gaus(0,0.1);
-	lenz = 2554.9 + hit_pos[h][2]; // ECCE z-shift
+	lenz = 2555 + hit_pos[h][2]; // ECCE z-shift
 	dirz = hit_mom[h][2]; 
 
 	int mcp = mcp_num[h];
 	int pix = pixel_id[h];	
-	int ch =  300*mcp + pix;
+	int ch =  256*mcp + pix;
       
 	TVector3 hit_mom_vec = TVector3(hit_mom[h][0], hit_mom[h][1], hit_mom[h][2]);
 	TVector3 dir0 = hit_mom_vec.Unit();      
@@ -263,7 +267,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 	cd.RotateUz(unitdir2);
       
 	double phi0 =  cd.Phi();
-	if(dirz<0){
+	if(dirz>0){
 	  reflected = true;
 	  lenz = 2*4235 - lenz; // ECCE
 	}
@@ -278,13 +282,11 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 
 	PrtLutNode *node = (PrtLutNode*) fLut->At(ch);
 	int size = node->Entries();
-	bool isGoodHit(true);
+	bool isGoodHit(false);
       	
-	Long_t hpath_input = hit_pathId[h];
 	int nreflections = nrefl[h];
-	Long_t nref_term = 9*TMath::Power(10,(nreflections-1));
-	
-	Long_t hpath = hpath_input % nref_term;
+
+	Long_t hpath = hit_pathId[h]; 
 	//std::cout << "path id = " << hpath << std::endl;
 	TString spath = Form("%ld",hpath);	
 	
@@ -302,12 +304,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 	    if(u == 2) dir.SetXYZ(-dird.X(), dird.Y(), dird.Z());
 	    if(u == 3) dir.SetXYZ(-dird.X(),-dird.Y(), dird.Z());
 	    if(reflected) dir.SetXYZ( dir.X(), dir.Y(),-dir.Z());  
-	    
-	    /*if(u == 1) dir.SetXYZ( dird.X(),-dird.Y(), -dird.Z());
-	    if(u == 2) dir.SetXYZ(-dird.X(), dird.Y(), -dird.Z());
-	    if(u == 3) dir.SetXYZ(-dird.X(),-dird.Y(), -dird.Z());
-	    if(reflected) dir.SetXYZ( dir.X(), dir.Y(), dir.Z());  
-	    */
+	    	    
 	    if(dir.Angle(fnX1) < fCriticalAngle || dir.Angle(fnY1) < fCriticalAngle) continue;
 
 	    luttheta = dir.Theta();
@@ -315,8 +312,8 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 	    if(luttheta > TMath::PiOver2()) luttheta = TMath::Pi()-luttheta;
 	    Hist_lut_theta->Fill(luttheta);
       
-	    bartime = lenz/cos(luttheta)/198.5; //198 
-	    
+	    bartime = (lenz/cos(luttheta)/198.5); //198
+
 	    fHist1->Fill(hitTime);
 	    double luttime = bartime+evtime;
 	    tdiff = hitTime-luttime;
@@ -325,10 +322,12 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 
 	    tangle = rotatedmom.Angle(dir)+fCorr[mcp];//45;
 	    //tangle = rotatedmom.Angle(dir);
-	    if(tangle>TMath::PiOver2()) tangle = TMath::Pi()-tangle;
-	    //std::cout << "tangle = " << tangle << std::endl;
- 
+	    //if(tangle>TMath::PiOver2()) tangle = TMath::Pi()-tangle;
+
 	    if(fabs(tdiff)<2) tangle -= 0.008*tdiff; // chromatic correction
+	    //if(fabs(tdiff)<2) tangle -= 0.005*tdiff;
+	    //if(fabs(tdiff)<2) tangle -= corr_coeff*tdiff;
+
 	    if(fabs(tdiff)>timeCut+luttime*0.035) continue;
 	    fDiff->Fill(hitTime,tdiff);
 	      	      
@@ -338,7 +337,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 	    fhChrom->Fill(tdiff,(tangle-fAngle[pid])*1000);
 	    fhChromL->Fill(tdiff/(lenz/cos(luttheta)),(tangle-fAngle[pid])*1000);
 	      
-	    if(fabs(tangle-fAngle[fp2])>0.03 && fabs(tangle-fAngle[fp1])>0.03) continue;
+	    if(fabs(tangle-fAngle[fp2]) > 0.05 && fabs(tangle-fAngle[fp1]) > 0.05) continue;
 
 	    if(tangle > minChangle && tangle < maxChangle){
 	      TVector3 rdir = TVector3(-dir.X(),dir.Y(),dir.Z());
@@ -361,7 +360,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
 	  nsHits++;
 	  tnph[pid]++;
 	  if(pid == 2) prt_hdigi[mcp]->Fill(pix%16, pix/16);
-	  }
+	}
       }
 
     double sum = sum1-sum2;
@@ -494,7 +493,7 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
       prt_canvasAdd("lh"+nid,800,400);
       prt_normalize(fLnDiff, 5);
       fLnDiff[fp2]->SetName(Form("s_%2.2f",sep));
-      fLnDiff[fp2]->SetTitle(Form("separation = %2.2f s.d.",sep));
+      fLnDiff[fp2]->SetTitle(Form("separation = %2.2f #pm %2.2f s.d.",sep, sep_err));
       fLnDiff[fp2]->GetXaxis()->SetTitle("ln L("+prt_lname[fp2]+") - ln L("+prt_lname[fp1]+")");      
       fLnDiff[fp2]->Draw();
       fLnDiff[fp1]->Draw("same");
@@ -509,6 +508,11 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
       fhChromL->Draw("colz");
     }
       
+    { // hp
+      auto cdigi = prt_drawDigi(fEvId); //2030
+      cdigi->SetName("hp"+nid);
+      prt_canvasAdd(cdigi);
+    }
       
     { // cherenkov ring
       prt_canvasAdd("ring"+nid,500,500);
@@ -591,15 +595,18 @@ void geo_reco_f4a(TString infile, TString lutfile, int verbose)
       fDiff->Draw("colz");
     }
     
-    TString filedir = fCorrFile;
+    /*TString filedir = fCorrFile;
     if(filedir.Contains("/")) {
       filedir.Remove(filedir.Last('/'));
       filedir += "/";
     }
     else filedir = ""; 
+    */
 
-    prt_canvasSave(filedir+"reco",0,0,0);
+    //prt_canvasSave(filedir+"reco",0,0,0);
     
+    prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",prt_theta), 0,0,0);
+
     if(fVerbose>2) prt_waitPrimitive("lh"+nid,"none");
     
   }

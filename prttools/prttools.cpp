@@ -225,7 +225,7 @@ TVector3 prt_fit(TH1 *h, double range = 3, double threshold=20, double limit=2, 
   delete prt_gaust;
   return TVector3(mean1,sigma1,mean2);
 }
-/*
+
 TGraph *prt_fitslices(TH2F *hh,double minrange=0, double maxrange=0, double fitrange=1,int rebin=1,int ret=0){
   TH2F *h =(TH2F*) hh->Clone("h");
   h->RebinY(rebin);
@@ -416,8 +416,8 @@ TString prt_randstr(int len = 10){
 // layoutId == 2031 - EIC DIRC beam test
 // layoutId == 2030 - EIC DIRC prism
 // layoutId == 2032 - EIC DIRC focusing prism 
-TH1 * prt_cdigi_th;*/
-/*TCanvas *prt_drawDigi(int layoutId = 0, double maxz = 0, double minz = 0, TCanvas *cdigi = NULL){
+TH1 * prt_cdigi_th;
+TCanvas *prt_drawDigi(int layoutId = 0, double maxz = 0, double minz = 0, TCanvas *cdigi = NULL){
 
   prt_last_layoutId=layoutId;
   prt_last_maxz=maxz;
@@ -616,7 +616,7 @@ TH1 * prt_cdigi_th;*/
   
   return cdigi;
 }
-*/
+
 
 TString prt_getPixData(TString s="m,p,v\n", int layoutId=1){
   int nrow = 3, ncol = 5, np, nmax=0, npix=8;
@@ -1183,11 +1183,11 @@ void prt_save(TPad *c= NULL,TString path="", int what=0, int style=0){
       }
       
       TCanvas *cc;
-      /*if(TString(c->GetName()).Contains("hp") || TString(c->GetName()).Contains("cdigi")) {
+      if(TString(c->GetName()).Contains("hp") || TString(c->GetName()).Contains("cdigi")) {
 	cc = prt_drawDigi(prt_last_layoutId,prt_last_maxz,prt_last_minz);
 	cc->SetCanvasSize(800,400);
 	if(name.Contains("=")) name =  name.Tokenize('=')->First()->GetName();	
-	}else*/{
+      }else{
       	cc = new TCanvas(TString(c->GetName())+"exp","cExport",0,0,w,h);
       	cc = (TCanvas*) c->DrawClone();
 	cc->SetCanvasSize(w,h);
