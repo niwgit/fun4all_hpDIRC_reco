@@ -3,21 +3,21 @@
 
 using namespace std;
 
-TClonesArray *fLutSum[2];
+TClonesArray *fLutSum[10];
 void adddirs(TString);
 
 void lut_add(TString inFile = "l_b*.root", TString outFile = "lut_all.root"){
   gROOT->ProcessLine(".L PrtLutNode.cxx+");
 
   TTree *fTreeNew = new TTree("prtlut","Look-up table for DIRC");
-  for(Int_t l=0; l<2; l++){
+  for(Int_t l=0; l<10; l++){
     fLutSum[l] = new TClonesArray("PrtLutNode");
     fTreeNew->Branch(Form("LUT_%d",l),&fLutSum[l],256000,0); 
   }
 
   Int_t Nnodes = 24*256;
   
-  for(Int_t l=0; l < 2; l++){
+  for(Int_t l=0; l < 10; l++){
     TClonesArray &fLutaSum = *fLutSum[l];
     for (Long64_t n=0; n<Nnodes; n++) {
       new((fLutaSum)[n]) PrtLutNode(-1);
@@ -69,15 +69,14 @@ void lut_add(TString inFile = "l_b*.root", TString outFile = "lut_all.root"){
 void adddirs(TString filename){
   TFile* f = new TFile(filename);
   TTree *t=(TTree *) f->Get("prtlut") ;
-  TClonesArray* fLut[2];
-  for(Int_t l=0; l<2; l++){
+  TClonesArray* fLut[10];
+  for(Int_t l=0; l<10; l++){
     fLut[l] = new TClonesArray("PrtLutNode");
-    //t->SetBranchAddress(Form("LUT_%d",l),&fLut[l]);
-    t->SetBranchAddress(Form("LUT"),&fLut[l]);
+    t->SetBranchAddress(Form("LUT_%d",l),&fLut[l]);    
   }
   t->GetEntry(0);
   std::cout<<filename<<" has "<<fLut[0]->GetEntriesFast()<< " entries" <<std::endl;
-  for(Int_t l=0; l<2; l++){
+  for(Int_t l=0; l<10; l++){
     for (Int_t inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
       PrtLutNode *node= (PrtLutNode*) fLut[l]->At(inode);
       for(int i=0; i< node->Entries(); i++){
@@ -86,7 +85,7 @@ void adddirs(TString filename){
       delete node;
     }
   }
-  for(Int_t l=0; l<2; l++) fLut[l]->Clear();
+  for(Int_t l=0; l<10; l++) fLut[l]->Clear();
     
   f->Close();
 }
