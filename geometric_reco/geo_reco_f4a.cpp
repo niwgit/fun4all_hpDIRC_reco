@@ -40,8 +40,12 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 
   fFile = new TFile(lutfile);
   fTree=(TTree *) fFile->Get("prtlut") ;
-  fLut = new TClonesArray("PrtLutNode");
-  fTree->SetBranchAddress("LUT",&fLut); 
+
+  for(Int_t b=0; b < 10; b++){
+    fLut[b] = new TClonesArray("PrtLutNode");
+    fTree->SetBranchAddress(Form("LUT_%d",b),&fLut[b]); 
+  }
+  
   fTree->GetEntry(0);
 
   fFit = new TF1("fgaus","[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2]) +[3]",0.35,0.9);
@@ -144,7 +148,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 
   fChain->SetBranchAddress("nhits", &hit_size);
 
-  int mcp_num[arr_size], pixel_id[arr_size];
+  int mcp_num[arr_size], pixel_id[arr_size], bar_id[arr_size];
   Double_t px, py, pz, theta_ang;
   double hit_pos[arr_size][3];
   double hit_mom[arr_size][3];
@@ -156,6 +160,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   fChain->SetBranchAddress("px", &px);
   fChain->SetBranchAddress("py", &py);
   fChain->SetBranchAddress("pz", &pz);
+  fChain->SetBranchAddress("bar_id", &bar_id);
   fChain->SetBranchAddress("mcp_id", &mcp_num);
   fChain->SetBranchAddress("pixel_id", &pixel_id);
   fChain->SetBranchAddress("pid", &Particle_id);
@@ -211,6 +216,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     double minChangle = 0.35;
     double maxChangle = 0.9;
     TVector3 mom_vec = TVector3(px,py,pz);
+    //int barbox_number = (int) (mom_vec.phi()*TMath::RadToDeg()+15.0)/30.0;
+    //mom_vec.RotateZ(-barbox_number*30*TMath::DegToRad());
     TVector3 rotatedmom = mom_vec.Unit();
     double sum1(0),sum2(0),noise(0.2);
     
@@ -253,6 +260,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 	lenz = 2555 + hit_pos[h][2]; // ECCE z-shift
 	dirz = hit_mom[h][2]; 
 
+	int barId = bar_id[h];
 	int mcp = mcp_num[h];
 	int pix = pixel_id[h];	
 	int ch =  256*mcp + pix;
@@ -280,7 +288,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 	
 	fHist5->Fill(theta0*TMath::Sin(phi0),theta0*TMath::Cos(phi0));
 
-	PrtLutNode *node = (PrtLutNode*) fLut->At(ch);
+	PrtLutNode *node = (PrtLutNode*) fLut[barId]->At(ch);
 	int size = node->Entries();
 	bool isGoodHit(false);
       	

@@ -39,5 +39,5 @@ int fDetectorID;
 double fBboxNum,fPipehAngle,fDphi,fBarPhi;
 double fSigma;
 
-TClonesArray *fLut;
+TClonesArray *fLut[10];
 void drawTheoryLines(double mom=6);
