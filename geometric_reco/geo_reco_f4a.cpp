@@ -204,7 +204,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   for (int ievent=0; ievent < nEvents; ievent++){
     fChain->GetEntry(ievent);
     int nHits = hit_size;  
-    if(ievent%10000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
+    if(ievent%1000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
     
     theta = theta_ang*TMath::RadToDeg();
     ntotal+=nHits;
@@ -264,7 +264,6 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 	dirz = hit_mom[h][2]; 
 
 	int barId = bar_id[h];
-	if(barId != 9) continue;
 	int mcp = mcp_num[h];
 	int pix = pixel_id[h];	
 	int ch =  256*mcp + pix;
