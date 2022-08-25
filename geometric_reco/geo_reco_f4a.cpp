@@ -1,6 +1,8 @@
-#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a.h"
+#include "geo_reco_f4a.h"
 #include <iostream>
-#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
+#include "../prttools/prttools.cpp"
+//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a.h"                                                           
+//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
 
 using namespace std;
 
@@ -10,8 +12,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 {
   fVerbose = verbose;
 
-  //gROOT->ProcessLine(".L PrtLutNode.cxx+");
-  gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
+  gROOT->ProcessLine(".L PrtLutNode.cxx+");
+  //gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
 
   TH1F*  fHist1 = new TH1F("Time1","1", 1000,0,20);
   TH1F*  fHist2 = new TH1F("Time2","2", 1000,-10,10);
@@ -110,7 +112,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   TVector3 fnY1 = TVector3(0,1,0);
   int nsHits(0),nsEvents(0);
 
-  double theta(0),phi(0),cangle[5] = {0}, spr[5] = {0}, nph[5] = {0}, sigma_nph[5] = {0}, timeRes(0), test1(0), sep(0), sep_err(0);
+  double theta(0),phi(0),cangle[5] = {0}, spr[5] = {0}, nph[5] = {0}, nph_err[5] = {0}, sigma_nph[5] = {0}, timeRes(0), test1(0), sep(0), sep_err(0);
 
   TGaxis::SetMaxDigits(3);
   prt_setRootPalette(1);
@@ -123,6 +125,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   tree.Branch("tofPid", &tofPid,"tofPid/I");
   tree.Branch("spr", &spr,"spr[5]/D");
   tree.Branch("nph",&nph,"nph[5]/D");
+  tree.Branch("nph_err",&nph_err,"nph_err[5]/D");
   tree.Branch("sigma_nph",&sigma_nph,"sigma_nph[5]/D");
   tree.Branch("cangle",&cangle,"cangle[5]/D");
   tree.Branch("sep",&sep,"sep/D");
@@ -201,7 +204,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   for (int ievent=0; ievent < nEvents; ievent++){
     fChain->GetEntry(ievent);
     int nHits = hit_size;  
-    if(ievent%1000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
+    if(ievent%10000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
     
     theta = theta_ang*TMath::RadToDeg();
     ntotal+=nHits;
@@ -261,6 +264,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 	dirz = hit_mom[h][2]; 
 
 	int barId = bar_id[h];
+	if(barId != 9) continue;
 	int mcp = mcp_num[h];
 	int pix = pixel_id[h];	
 	int ch =  256*mcp + pix;
@@ -403,6 +407,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
       auto f = hnph[h]->GetFunction("gaus");
       if(f){
 	nph[h] = f->GetParameter(1);
+	nph_err[h] = f->GetParError(1);
 	sigma_nph[h] = f->GetParameter(2);
       }
 
@@ -455,8 +460,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     e4 = -2*(m1 - m2)/((s1 + s2)*(s1 + s2))*ds2;
     sep_err = sqrt(e1*e1+e2*e2+e3*e3+e4*e4);    
     
-    std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp1],spr[fp1],nph[fp1],sigma_nph[fp1])<<std::endl;
-    std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp2],spr[fp2],nph[fp2],sigma_nph[fp2])<<std::endl;
+    std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp1],spr[fp1],nph[fp1],nph_err[fp1])<<std::endl;
+    std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp2],spr[fp2],nph[fp2],nph_err[fp2])<<std::endl;
     std::cout<<Form("SEP = %2.2f +/- %2.2f ",sep,sep_err)<<std::endl;    
     }
 
@@ -492,6 +497,24 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
       hnph[fp1]->SetStats(0);
       hnph[fp1]->Draw();
       hnph[fp2]->Draw("same");
+
+      prt_canvasGet("nph"+nid)->Update();
+  
+      TPaveText *pt = new TPaveText();
+      pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f",nph[fp1],nph_err[fp1]));
+      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kBlue);
+
+      pt->AddText(Form("N(K^{+}) = %1.2f #pm %1.2f",nph[fp2],nph_err[fp2]));
+      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kRed);
+
+      pt->SetX1NDC(0.73);
+      pt->SetX2NDC(0.85);
+      pt->SetY1NDC(0.65);
+      pt->SetY2NDC(0.85);
+      pt->SetShadowColor(0);
+      pt->SetFillColor(0);
+      pt->SetLineColor(0);
+      pt->Draw();
     }
     
     { // sep
