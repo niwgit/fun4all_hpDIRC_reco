@@ -218,9 +218,18 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 
     double minChangle = 0.35;
     double maxChangle = 0.9;
+
     TVector3 mom_vec = TVector3(px,py,pz);
-    //int barbox_number = (int) (mom_vec.phi()*TMath::RadToDeg()+15.0)/30.0;
-    //mom_vec.RotateZ(-barbox_number*30*TMath::DegToRad());
+    int barbox_number = 0;
+
+    double phi_track = atan2(py, px);
+    //if(ievent < 5) std::cout << "phi of track =" << phi_track*TMath::RadToDeg() << " deg" << std::endl;
+
+    if(phi_track > 0) barbox_number = (int) (phi_track*TMath::RadToDeg()+15.0)/30.0;
+    if(phi_track < 0) barbox_number = (int) (phi_track*TMath::RadToDeg()-15.0)/30.0;
+
+    mom_vec.RotateZ(-barbox_number*30*TMath::DegToRad());
+    
     TVector3 rotatedmom = mom_vec.Unit();
     double sum1(0),sum2(0),noise(0.2);
     
@@ -228,7 +237,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     TVector3 init = rotatedmom;
     rotatedmom.RotateY(prt_rand.Gaus(0,test1));
     rotatedmom.Rotate(TMath::Pi(),init);
- 
+    
     if(fSigma<0.003) fSigma=0.007;  
 
     if(ievent==1){
