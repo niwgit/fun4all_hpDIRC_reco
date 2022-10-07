@@ -155,6 +155,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   Double_t px, py, pz, theta_ang;
   double hit_pos[arr_size][3];
   double hit_mom[arr_size][3];
+  double track_momentum_at_bar[arr_size][3];
   double lead_time[arr_size];
   Long_t hit_pathId[arr_size];
   int nrefl[arr_size];
@@ -172,7 +173,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   fChain->SetBranchAddress("lead_time", &lead_time);
   fChain->SetBranchAddress("hit_pathId", &hit_pathId);
   fChain->SetBranchAddress("nrefl", &nrefl);
-
+  fChain->SetBranchAddress("track_momentum_at_bar", &track_momentum_at_bar);
+  
   double timeCut = 0.5;
   
   //std::cout<<"Run started for ["<<start<<","<<end <<"]"<<std::endl;
@@ -205,7 +207,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     fChain->GetEntry(ievent);
     int nHits = hit_size;  
     if(ievent%1000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
-    
+
     theta = theta_ang*TMath::RadToDeg();
     ntotal+=nHits;
     prt_theta = theta;
@@ -219,13 +221,31 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     double minChangle = 0.35;
     double maxChangle = 0.9;
 
-    TVector3 mom_vec = TVector3(px,py,pz);
+    double track_px;
+    double track_py;
+    double track_pz;
+    
+    //TVector3 mom_vec = TVector3(px,py,pz);
+
+    for(int h=0; h < nHits; h++)
+      {
+	if(nHits > 0)
+	  {
+	    track_px = track_momentum_at_bar[h][0];
+	    track_py = track_momentum_at_bar[h][1];
+	    track_pz = track_momentum_at_bar[h][2];
+	    continue;
+	  }
+      }
+    if(nHits == 0) continue;
+    TVector3 mom_vec = TVector3(track_px, track_py, track_pz);
     int barbox_number = 0;
 
-    double phi_track = atan2(py, px);
+    //double phi_track = atan2(py, px);
+    double phi_track = atan2(track_py, track_px);
     //if(ievent < 5) std::cout << "phi of track =" << phi_track*TMath::RadToDeg() << " deg" << std::endl;
 
-    if(phi_track > 0) barbox_number = (int) (phi_track*TMath::RadToDeg()+15.0)/30.0;
+    if(phi_track > 0) barbox_number = (int) (phi_track*TMath::RadToDeg()+15.0)/30.0; 
     if(phi_track < 0) barbox_number = (int) (phi_track*TMath::RadToDeg()-15.0)/30.0;
 
     mom_vec.RotateZ(-barbox_number*30*TMath::DegToRad());
