@@ -226,7 +226,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     double track_pz;
     
     //TVector3 mom_vec = TVector3(px,py,pz);
-
+    if(nHits == 0) continue;
     for(int h=0; h < nHits; h++)
       {
 	if(nHits > 0)
@@ -234,10 +234,10 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 	    track_px = track_momentum_at_bar[h][0];
 	    track_py = track_momentum_at_bar[h][1];
 	    track_pz = track_momentum_at_bar[h][2];
-	    continue;
+	    break;
 	  }
       }
-    if(nHits == 0) continue;
+
     TVector3 mom_vec = TVector3(track_px, track_py, track_pz);
     int barbox_number = 0;
 
