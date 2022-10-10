@@ -17,7 +17,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   TH1F *hl[5],*hll[5],*hnph[5];
   for(int i=0; i<5; i++){
     hl[i] = new TH1F(Form("hl_%d",i),";LE time [ns]; entries [#]", 2000,0,100);    
-    hll[i]= new TH1F(Form("ll_i%d",i),";ln L("+prt_lname[pid]+") - ln L(#pi); entries [#]",320,-80,80);
+    hll[i]= new TH1F(Form("ll_i%d",i),";ln L("+prt_lname[pid]+") - ln L(#pi); entries [#]",240,-80,80);
     hnph[i] = new TH1F(Form("hnph_%d",i),";multiplicity [#]; entries [#]", 200,0,200);
     hnph[i]->SetLineColor(prt_color[i]);
     hll[i]->SetLineColor(prt_color[i]);
@@ -133,10 +133,10 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   prt_canvasGet("nph_"+name)->Update();
   
   TPaveText *pt = new TPaveText();
-  pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f", nph[2], sigma_nph[2]));
+  pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f", nph[2], nph_err[2]));
   ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kBlue);
 
-  pt->AddText(Form("N(K^{+}) = %1.2f #pm %1.2f", nph[3], sigma_nph[3]));
+  pt->AddText(Form("N(K^{+}) = %1.2f #pm %1.2f", nph[3], nph_err[3]));
   ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kRed);
 
   pt->SetX1NDC(0.12);
