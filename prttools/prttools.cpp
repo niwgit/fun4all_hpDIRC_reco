@@ -140,7 +140,7 @@ int map_pix[prt_maxchm];
 int map_row[prt_maxchm];
 int map_col[prt_maxchm];
 
-int prt_pid(0), prt_pdg[]={11,13,211,321,2212};
+int prt_pid(0), prt_pdg[]={-11,13,211,321,2212};
 double prt_mass[]={0.000511,0.1056584,0.139570,0.49368,0.9382723};
 TString  prt_name[]={"e","muon","pion","kaon","proton"};
 TString  prt_lname[]={"e","#mu","#pi","K","p"};
@@ -1361,7 +1361,7 @@ TGraph* prt_smooth(TGraph* g,int smoothness=1){
 
 int prt_get_pid(int pdg){
   int pid=0;
-  if(pdg==11)   pid=0; //e
+  if(pdg==-11)   pid=0; //e
   if(pdg==13)   pid=1; //mu
   if(pdg==211)  pid=2; //pi
   if(pdg==321)  pid=3; //K

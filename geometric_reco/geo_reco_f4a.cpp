@@ -138,7 +138,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   timeRes = 0.2;
   test1 = 0.0005;
   //test1 = 0.;
-
+  //test1 = 0.0022;
   int nEvents = fChain->GetEntries();
   int end = nEvents;
   //std::cout << "No of events = " << nEvents << std::endl;
@@ -152,7 +152,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   fChain->SetBranchAddress("nhits", &hit_size);
 
   int mcp_num[arr_size], pixel_id[arr_size], bar_id[arr_size];
-  Double_t px, py, pz, theta_ang;
+  Double_t px, py, pz, theta_ang, phi_ang;
   double hit_pos[arr_size][3];
   double hit_mom[arr_size][3];
   double track_momentum_at_bar[arr_size][3];
@@ -161,6 +161,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   int nrefl[arr_size];
 
   fChain->SetBranchAddress("theta", &theta_ang);
+  fChain->SetBranchAddress("phi", &phi_ang);
   fChain->SetBranchAddress("px", &px);
   fChain->SetBranchAddress("py", &py);
   fChain->SetBranchAddress("pz", &pz);
@@ -199,7 +200,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
       fp2=t;      
       }
   }  
-
+  //std::cout << "fp1 = " << fp1 << "\t" << "fp2 = " << fp2 << std::endl;
   int ntotal=0;  
 
 
@@ -211,7 +212,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     theta = theta_ang*TMath::RadToDeg();
     ntotal+=nHits;
     prt_theta = theta;
-    mom = TMath::Sqrt(px*px + py*py + pz*pz);
+    mom = TMath::Sqrt(px*px + py*py + pz*pz); 
     //double corr_coeff = chrom_func->Eval(theta);
     
     tofPid = Particle_id;
@@ -501,7 +502,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   Hist_lut_theta->Write();
   
   if(fVerbose>1){
-    TString nid = Form("_%1.2f_%1.4f_%1.2f",prt_theta,test1,mom);
+    TString nid = Form("_%1.2f_%.0f_%1.4f_%1.2f",prt_theta, phi_ang*TMath::RadToDeg(), test1, mom);
 
     { // cherenkov angle
       prt_canvasAdd("tangle"+nid,800,400);
@@ -510,7 +511,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
       hthetac[fp1]->SetTitle(Form("theta %1.2f", prt_theta));
       hthetac[fp1]->Draw("");
       hthetac[fp2]->Draw("same");
-      drawTheoryLines(6);
+      //drawTheoryLines(6);
+      drawTheoryLines(1.2);
 
       prt_canvasAdd("tangled"+nid,800,400);
       prt_normalize(hthetacd, 5);    
@@ -530,11 +532,13 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
   
       TPaveText *pt = new TPaveText();
       pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f",nph[fp1],nph_err[fp1]));
-      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kBlue);
+      //pt->AddText(Form("N(e^{+}) = %1.2f #pm %1.2f",nph[fp1],nph_err[fp1]));
+      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(prt_color[fp1]);
 
       pt->AddText(Form("N(K^{+}) = %1.2f #pm %1.2f",nph[fp2],nph_err[fp2]));
-      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(kRed);
-
+      //pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f",nph[fp2],nph_err[fp2]));
+      ((TText*)pt->GetListOfLines()->Last())->SetTextColor(prt_color[fp2]);
+      
       pt->SetX1NDC(0.73);
       pt->SetX2NDC(0.85);
       pt->SetY1NDC(0.65);
@@ -783,6 +787,7 @@ void drawTheoryLines(double mom){
   
   for(int i=0; i<5; i++){
     fAngle[i] = acos(sqrt(mom*mom + prt_mass[i]*prt_mass[i])/mom/1.4738); //1.4738 = 370 = 3.35
+    //std::cout << "momentum = " << mom << "\t" << "mass = " << prt_mass[i] << "\t" << "thetac = " << fAngle[i] << std::endl;
   }
   
   TLine *line = new TLine(0,0,0,1000);
