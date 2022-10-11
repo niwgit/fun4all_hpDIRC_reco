@@ -205,7 +205,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
 
 
   for (int ievent=0; ievent < nEvents; ievent++){
-    fChain->GetEntry(ievent);
+  fChain->GetEntry(ievent);
     int nHits = hit_size;  
     if(ievent%1000==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
 
@@ -227,7 +227,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     double track_pz;
     
     //TVector3 mom_vec = TVector3(px,py,pz);
-    if(nHits == 0) continue;
+
     for(int h=0; h < nHits; h++)
       {
 	if(nHits > 0)
@@ -258,6 +258,7 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
     TVector3 init = rotatedmom;
     rotatedmom.RotateY(prt_rand.Gaus(0,test1));
     rotatedmom.Rotate(TMath::Pi(),init);
+    if(nHits == 0) continue;
     
     if(fSigma<0.003) fSigma=0.007;  
 
@@ -511,8 +512,8 @@ void geo_reco_f4a(TString infile, TString lutfile, TString filedir, int verbose)
       hthetac[fp1]->SetTitle(Form("theta %1.2f", prt_theta));
       hthetac[fp1]->Draw("");
       hthetac[fp2]->Draw("same");
-      //drawTheoryLines(6);
-      drawTheoryLines(1.2);
+      drawTheoryLines(6);
+      //drawTheoryLines(1.2);
 
       prt_canvasAdd("tangled"+nid,800,400);
       prt_normalize(hthetacd, 5);    
