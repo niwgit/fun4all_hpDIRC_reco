@@ -33,6 +33,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   double fCorr[28];
 
   TH1F* Hist_lut_theta = new TH1F("lut_theta","lut theta (rad)", 100, -TMath::Pi(), TMath::Pi());
+  TH1F* Hist_parent_momentum = new TH1F("parent momentum",";parent track momentum (GeV/c)", 100, 0., 50.0);
+  TH1F* Hist_hit_pos_z = new TH1F("hit_pos_z",";hit position z (mm)", 2500, -3000, 2000);
   //TF1* chrom_func = new TF1("chrom_func","0.02619 + (-0.000592973)*x + (4.05258e-06)*x*x + (1.15741e-09)*x*x*x",20,150);
 
   int gg_i(0);
@@ -65,8 +67,10 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     hthetac[h]->SetLineColor(prt_color[h]);
     hthetacd[h] = new TH1F(Form("thetacd_%d",h),";#Delta#theta_{C} [mrad];entries [#]", 200,-60,60);
     hthetacd[h]->SetLineColor(prt_color[h]);
-    //hnph[h] = new TH1F(Form("nph_%d",h),";detected photons [#];entries [#]", 200,0,200);
     hnph[h] = new TH1F(Form("nph_%d",h),";detected photons [#];entries [#]", 300,0,300);
+    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum < 5.5 GeV/c and > 6.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
+    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum < 5.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
+    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum > 6.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
     hnph[h]->SetLineColor(prt_color[h]);
     fFunc[h] = new TF1(Form("gaus_%d",h),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);    
     fFunc[h]->SetLineColor(prt_color[h]);
@@ -159,6 +163,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   double lead_time[arr_size];
   Long_t hit_pathId[arr_size];
   int nrefl[arr_size];
+  double parent_track_momentum[arr_size];
 
   fChain->SetBranchAddress("bar_id", &bar_id);
   fChain->SetBranchAddress("mcp_id", &mcp_num);
@@ -171,6 +176,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   fChain->SetBranchAddress("track_momentum_at_bar", &track_momentum_at_bar);
   fChain->SetBranchAddress("parent_track_id", &track_id);
   fChain->SetBranchAddress("parent_pid", &track_pid);
+  fChain->SetBranchAddress("parent_momentum", &parent_track_momentum);
   
   double timeCut = 0.5;
   
@@ -190,15 +196,13 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     ntotal+=nHits;
     prt_theta = theta;
     mom = 6.0;
-
-    int tnph[5]={0};
     
     for(int h=0; h < nHits; h++)
       {     
 	int photon_parent_track_id = track_id[h];
 	TVector3 photon_parent_mom_vec = track_momentum_at_bar[h];
 	//std::cout << "track id of parent = " << photon_parent_track_id << std::endl;
-
+	
 	map_track_momenta[photon_parent_track_id].push_back(photon_parent_mom_vec);	
       }
     
@@ -207,7 +211,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     std::vector<Int_t> vec_track_id;
     std::vector<TVector3> vec_avg_track_mom;
     
-    //if(ievent==100) std::cout << "number of charged tracks = " << map_track_momenta.size() << std::endl;
+    //if(ievent<20) std::cout << "number of charged tracks = " << map_track_momenta.size() << std::endl;
 
     for(iter = map_track_momenta.begin(); iter != map_track_momenta.end(); ++iter)
       {
@@ -245,14 +249,15 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
     std::set<Int_t> set_good_hits;
     
-    for(int i=0; i < vec_track_id.size(); i++)
+    for(int i=0; i < vec_track_id.size(); i++)   
       {
 	int pid;
+	int tnph[5]={0};
 	
 	TVector3 mom_vec = vec_avg_track_mom[i];
-	if(mom_vec.Theta() < 35.0*TMath::DegToRad() || mom_vec.Theta() > 45.0*TMath::DegToRad()) continue;
+	if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
 	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
-	//mom_vec.Print();		
+	//if(ievent < 50) mom_vec.Print();		
 
 	good_track_count++;
 	
@@ -286,7 +291,10 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	    if(track_pid[h] != 211 && track_pid[h] != 321) continue; 
 	    pid = prt_get_pid(track_pid[h]);
 	    //std::cout << "parent track pid of photon = " << track_pid[h] << std::endl; 
-
+	    //if(parent_track_momentum[h] < 5.5 || parent_track_momentum[h] > 6.5) continue; 
+	    //if(parent_track_momentum[h] > 5.5 && parent_track_momentum[h] < 6.5) continue;
+	    //if(parent_track_momentum[h] < 6.5) continue;
+	    
 	    const bool is_in_good_hits = set_good_hits.find(h) != set_good_hits.end();
 	    if(is_in_good_hits) continue;
 
@@ -294,7 +302,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	    double maxChangle = 0.9;
 
 	    hitTime = lead_time[h] + prt_rand.Gaus(0,0.1);
-	    lenz = 2555 + hit_pos[h][2]; // ECCE z-shift
+	    lenz = 2555 + hit_pos[h][2]; // ECCE z-shift	    
+	    //lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
 	    dirz = hit_mom[h][2]; 
 
 	    int barId = bar_id[h];
@@ -404,11 +413,14 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       
 	if(isGoodHit){
 	  set_good_hits.insert(h);
+	  //if(ievent < 10) std::cout << "bar id = " << barId << "for track " << track_id[h] << std::endl;
 	  nsHits++;
 	  tnph[pid]++;
 	  if(pid == 2) prt_hdigi[mcp]->Fill(pix%16, pix/16);
+	  Hist_parent_momentum->Fill(parent_track_momentum[h]);
+	  Hist_hit_pos_z->Fill(hit_pos[h][2]);
 	}
-	  }
+	  } // end of hits loop
 
     double sum = sum1-sum2;
 
@@ -434,9 +446,10 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     map_track_momenta.clear();
     vec_track_id.clear();
     vec_avg_track_mom.clear();
+    //if(ievent < 100) std::cout << "size of set of good hits = " << set_good_hits.size() << " for " << good_track_count << " good tracks" << std::endl;
     set_good_hits.clear();
     
-    //std::cout << "number of good tracks = " << good_track_count << std::endl;
+    //if(ievent < 50) std::cout << "number of good tracks = " << good_track_count << std::endl;
     
     if(++nsEvents>=end) break;
   }
@@ -453,7 +466,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	nph[h] = f->GetParameter(1);
 	nph_err[h] = f->GetParError(1);
 	sigma_nph[h] = f->GetParameter(2);
-      }
+	}
 
     
     theta = 40.0;
@@ -515,8 +528,11 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   
   tree.Fill();
   tree.Write();  
- 
 
+  Hist_lut_theta->Write();
+  Hist_parent_momentum->Write();
+  Hist_hit_pos_z->Write();
+  
   //------------------------- canvas draw ----------------
   
   if(fVerbose>1){
