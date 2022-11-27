@@ -247,7 +247,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       }
 
 
-    std::set<Int_t> set_good_hits;
+    //std::set<Int_t> set_good_hits;
     
     for(int i=0; i < vec_track_id.size(); i++)   
       {
@@ -282,7 +282,6 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	rotatedmom.Rotate(TMath::Pi(),init);
 
 	if(fSigma<0.003) fSigma=0.007;  
-
 	
 	// hits loop
 	for(int h=0; h < nHits; h++)
@@ -295,15 +294,14 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	    //if(parent_track_momentum[h] > 5.5 && parent_track_momentum[h] < 6.5) continue;
 	    //if(parent_track_momentum[h] < 6.5) continue;
 	    
-	    const bool is_in_good_hits = set_good_hits.find(h) != set_good_hits.end();
-	    if(is_in_good_hits) continue;
-
+	    //if(set_good_hits.find(h) != set_good_hits.end()) continue;
+	    
 	    double minChangle = 0.35;
 	    double maxChangle = 0.9;
 
 	    hitTime = lead_time[h] + prt_rand.Gaus(0,0.1);
-	    lenz = 2555 + hit_pos[h][2]; // ECCE z-shift	    
-	    //lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
+	    //lenz = 2555 + hit_pos[h][2]; // ECCE z-shift	    
+	    lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
 	    dirz = hit_mom[h][2]; 
 
 	    int barId = bar_id[h];
@@ -405,14 +403,14 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	    }
 
 	    isGoodHit=true;
-	      
+	    
 	    sum1 += -TMath::Log(fFunc[fp1]->Eval(tangle)+noise);
 	    sum2 += -TMath::Log(fFunc[fp2]->Eval(tangle)+noise);
 	  }
 	}
       
 	if(isGoodHit){
-	  set_good_hits.insert(h);
+	  //set_good_hits.insert(h);
 	  //if(ievent < 10) std::cout << "bar id = " << barId << "for track " << track_id[h] << std::endl;
 	  nsHits++;
 	  tnph[pid]++;
@@ -441,13 +439,14 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       theta = 40.0;
       hthetac[fp1]->Reset();
     }
+    //if(ievent < 10) std::cout << "size of set of good hits = " << set_good_hits.size() << std::endl;
       } // end of tracks loop
 
     map_track_momenta.clear();
     vec_track_id.clear();
     vec_avg_track_mom.clear();
     //if(ievent < 100) std::cout << "size of set of good hits = " << set_good_hits.size() << " for " << good_track_count << " good tracks" << std::endl;
-    set_good_hits.clear();
+    //set_good_hits.clear();
     
     //if(ievent < 50) std::cout << "number of good tracks = " << good_track_count << std::endl;
     
