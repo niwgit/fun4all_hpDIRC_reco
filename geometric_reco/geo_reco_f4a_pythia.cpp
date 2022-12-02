@@ -35,6 +35,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   TH1F* Hist_lut_theta = new TH1F("lut_theta","lut theta (rad)", 100, -TMath::Pi(), TMath::Pi());
   TH1F* Hist_parent_momentum = new TH1F("parent momentum",";parent track momentum (GeV/c)", 100, 0., 50.0);
   TH1F* Hist_hit_pos_z = new TH1F("hit_pos_z",";hit position z (mm)", 2500, -3000, 2000);
+  TH1F* Hist_lut_time = new TH1F("lut_time","LUT time;LUT time [ns]", 200,0,200);
+  TH1F* Hist_time_diff = new TH1F("time_diff","time difference;t_{measured}-t_{calc} [ns]", 1000,-50,50);
   //TF1* chrom_func = new TF1("chrom_func","0.02619 + (-0.000592973)*x + (4.05258e-06)*x*x + (1.15741e-09)*x*x*x",20,150);
 
   int gg_i(0);
@@ -192,7 +194,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     int nHits = hit_size;
     if(ievent%100==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
 
-    theta = 40.0;
+    theta = 30.0;
     ntotal+=nHits;
     prt_theta = theta;
     mom = 6.0;
@@ -255,7 +257,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	int tnph[5]={0};
 	
 	TVector3 mom_vec = vec_avg_track_mom[i];
-	if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
+	//if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
+	if(mom_vec.Theta() < 29.5*TMath::DegToRad() || mom_vec.Theta() > 30.5*TMath::DegToRad()) continue;
 	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
 	//if(ievent < 50) mom_vec.Print();		
 
@@ -272,7 +275,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
 	//if(phi_track*TMath::RadToDeg() < -15.0 || phi_track*TMath::RadToDeg() > 15.0) continue;
 	mom_vec.RotateZ(-barbox_number*30*TMath::DegToRad());
-
+	
 	TVector3 rotatedmom = mom_vec.Unit();
 	double sum1(0),sum2(0),noise(0.2);
     
@@ -301,7 +304,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
 	    hitTime = lead_time[h] + prt_rand.Gaus(0,0.1);
 	    //lenz = 2555 + hit_pos[h][2]; // ECCE z-shift	    
-	    lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
+	    //lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
+	    lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - 30.0*TMath::DegToRad()));
 	    dirz = hit_mom[h][2]; 
 
 	    int barId = bar_id[h];
@@ -368,6 +372,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
 	    fHist1->Fill(hitTime);
 	    double luttime = bartime+evtime;
+	    Hist_lut_time->Fill(luttime);
 	    tdiff = hitTime-luttime;
 	    fHistDiff[reflected]->Fill(tdiff);
 	    if(ipath) fHistDiff[2]->Fill(tdiff);
@@ -417,6 +422,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	  if(pid == 2) prt_hdigi[mcp]->Fill(pix%16, pix/16);
 	  Hist_parent_momentum->Fill(parent_track_momentum[h]);
 	  Hist_hit_pos_z->Fill(hit_pos[h][2]);
+	  Hist_time_diff->Fill(tdiff);
+	 
 	}
 	  } // end of hits loop
 
@@ -436,7 +443,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
       FindPeak(cangle,spr);
       //theta = theta_ang*TMath::RadToDeg();
-      theta = 40.0;
+      theta = 30.0;
       hthetac[fp1]->Reset();
     }
     //if(ievent < 10) std::cout << "size of set of good hits = " << set_good_hits.size() << std::endl;
@@ -468,7 +475,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	}
 
     
-    theta = 40.0;
+    theta = 30.0;
 
     TF1 *ff;
     double m1=0,m2=0,s1=0,s2=0,dm1=0,dm2=0,ds1=0,ds2=0;
@@ -531,6 +538,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   Hist_lut_theta->Write();
   Hist_parent_momentum->Write();
   Hist_hit_pos_z->Write();
+  Hist_time_diff->Write();
+  Hist_lut_time->Write();
   
   //------------------------- canvas draw ----------------
   
