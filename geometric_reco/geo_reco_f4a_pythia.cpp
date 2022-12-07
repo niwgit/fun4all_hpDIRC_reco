@@ -1,7 +1,7 @@
 #include "geo_reco_f4a_pythia.h"
 #include <iostream>
 #include "../prttools/prttools.cpp"
-//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a.h"
+//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a_pythia.h"
 //#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
 
 using namespace std;
@@ -14,7 +14,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
   gROOT->ProcessLine(".L PrtLutNode.cxx+");
   //gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
-
+  
   TH1F*  fHist1 = new TH1F("Time1","1", 1000,0,20);
   TH1F*  fHist2 = new TH1F("Time2","2", 1000,-10,10);
   TH1F*  fHistDiff[3];
@@ -76,6 +76,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     hnph[h]->SetLineColor(prt_color[h]);
     fFunc[h] = new TF1(Form("gaus_%d",h),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);    
     fFunc[h]->SetLineColor(prt_color[h]);
+
+    fSigma[h] = 0.007;
     }
 
     for(int i=0; i<20; i++){
@@ -101,8 +103,11 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     for(int i=0; i<ch.GetEntries(); i++){
       ch.GetEvent(i);
       fCorr[pmt] = (fabs(corr)<0.007)? corr: 0.00001;
-      fSigma = 0.001*cspr[2]*0.9;
-      std::cout<<"pmt "<<pmt<<"  "<<fCorr[pmt]<< " spr = "<<fSigma<<std::endl;    
+      for (int h = 0; h < 5; h++) {
+        fSigma[h] = 0.001 * fabs(cspr[h]) * 0.95;
+        if (fSigma[h] > 0.005) fSigma[h] = 0.005;
+      }
+      std::cout << "pmt " << pmt << "  " << fCorr[pmt] << " spr = (2) " << fSigma[2] << "  (3) " << fSigma[3] << std::endl;
     }
   }else{
     std::cout<<"------- corr file not found  "<<fCorrFile <<std::endl;
@@ -181,7 +186,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   fChain->SetBranchAddress("parent_momentum", &parent_track_momentum);
   
   double timeCut = 0.5;
-  
+  double bkg_track_theta;
+
   int fEvId = 2030; 
 
   fp1=2; fp2=3;
@@ -192,7 +198,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   for (int ievent=0; ievent < nEvents; ievent++){
     fChain->GetEntry(ievent);
     int nHits = hit_size;
-    if(ievent%100==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
+    if(ievent%500==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
 
     theta = 30.0;
     ntotal+=nHits;
@@ -236,7 +242,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       {
         for(int h=0; h<5; h++)
 	  {
-	    fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",100,-60,60);
+	    fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",160,-100,100);
 	    fLnDiff[h]->SetLineColor(prt_color[h]);
 	  }
       }
@@ -245,7 +251,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       fAngle[i] = acos(sqrt(mom*mom + prt_mass[i]*prt_mass[i])/mom/1.4738); //1.4738 = 370 = 3.35
       fFunc[i]->SetParameter(0,1);
       fFunc[i]->SetParameter(1,fAngle[i]);
-      fFunc[i]->SetParameter(2,fSigma);
+      fFunc[i]->SetParameter(2, fSigma[i]);
       }
 
 
@@ -258,7 +264,15 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	
 	TVector3 mom_vec = vec_avg_track_mom[i];
 	//if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
-	if(mom_vec.Theta() < 29.5*TMath::DegToRad() || mom_vec.Theta() > 30.5*TMath::DegToRad()) continue;
+	if(mom_vec.Theta() < 29.5*TMath::DegToRad() || mom_vec.Theta() > 30.5*TMath::DegToRad()) 
+	  {
+	    if(ievent<10) 
+	      {
+		bkg_track_theta =  mom_vec.Theta()*TMath::RadToDeg();
+		//std::cout << "bkg track theta = " << bkg_track_theta << std::endl;
+	      }
+	    continue;
+	  }
 	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
 	//if(ievent < 50) mom_vec.Print();		
 
@@ -283,8 +297,6 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	TVector3 init = rotatedmom;
 	rotatedmom.RotateY(prt_rand.Gaus(0,test1));
 	rotatedmom.Rotate(TMath::Pi(),init);
-
-	if(fSigma<0.003) fSigma=0.007;  
 	
 	// hits loop
 	for(int h=0; h < nHits; h++)
@@ -581,8 +593,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       //pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f",nph[fp2],nph_err[fp2]));
       ((TText*)pt->GetListOfLines()->Last())->SetTextColor(prt_color[fp2]);
       
-      pt->SetX1NDC(0.73);
-      pt->SetX2NDC(0.85);
+      pt->SetX1NDC(0.23);
+      pt->SetX2NDC(0.35);
       pt->SetY1NDC(0.65);
       pt->SetY2NDC(0.85);
       pt->SetShadowColor(0);
@@ -710,8 +722,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
     //prt_canvasSave(filedir+"reco",0,0,0);
     
-    prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",prt_theta), 0,0,0);
-
+    //prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",prt_theta), 0,0,0);
+    prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",bkg_track_theta), 0,0,0); 
     if(fVerbose>2) prt_waitPrimitive("lh"+nid,"none");
     
   }
@@ -730,11 +742,10 @@ void FindPeak(double (&cangle)[5], double (&spr)[5]){
       else cangle[h] =  hthetac[h]->GetXaxis()->GetBinCenter(hthetac[h]->GetMaximumBin());
 
       fFit->SetParameters(100,cangle[h],0.005,10);   // peak
-      fFit->SetParameter(2,0.005); // width
-      fFit->FixParameter(2,0.008); // width
-      hthetac[h]->Fit("fgaus","Q","",cangle[h]-3.5*fSigma,cangle[h]+3.5*fSigma);
+      fFit->FixParameter(2,0.003); // width
+      hthetac[h]->Fit("fgaus","Q","",cangle[h]-3.5*fSigma[h],cangle[h]+3.5*fSigma[h]);
       fFit->ReleaseParameter(2); // width
-      hthetac[h]->Fit("fgaus","MQ","",cangle[h]-3.5*fSigma,cangle[h]+3.5*fSigma);
+      hthetac[h]->Fit("fgaus","MQ","",cangle[h]-3.5*fSigma[h],cangle[h]+3.5*fSigma[h]);
       cangle[h] = fFit->GetParameter(1);
       spr[h] = fFit->GetParameter(2)*1000; 
       if(fVerbose>2) gROOT->SetBatch(0);

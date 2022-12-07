@@ -40,7 +40,7 @@ void FitRing(double& x0, double& y0, double& theta);
 //double FindStartTime(PrtEvent *e);
 int fDetectorID;
 double fBboxNum,fPipehAngle,fDphi,fBarPhi;
-double fSigma;
+double fSigma[5];
 
 TClonesArray *fLut[10];
 void drawTheoryLines(double mom=6);
