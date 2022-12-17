@@ -38,7 +38,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   TH1F* Hist_lut_time = new TH1F("lut_time","LUT time;LUT time [ns]", 200,0,200);
   TH1F* Hist_time_diff = new TH1F("time_diff","time difference;t_{measured}-t_{calc} [ns]", 1000,-50,50);
   //TF1* chrom_func = new TF1("chrom_func","0.02619 + (-0.000592973)*x + (4.05258e-06)*x*x + (1.15741e-09)*x*x*x",20,150);
-
+  
   int gg_i(0);
   
   fChain = new TChain("mG4EvtTree");
@@ -70,9 +70,6 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     hthetacd[h] = new TH1F(Form("thetacd_%d",h),";#Delta#theta_{C} [mrad];entries [#]", 200,-60,60);
     hthetacd[h]->SetLineColor(prt_color[h]);
     hnph[h] = new TH1F(Form("nph_%d",h),";detected photons [#];entries [#]", 300,0,300);
-    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum < 5.5 GeV/c and > 6.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
-    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum < 5.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
-    //hnph[h] = new TH1F(Form("nph_%d",h),"track momentum > 6.5 GeV/c;detected photons [#];entries [#]", 300,0,300);
     hnph[h]->SetLineColor(prt_color[h]);
     fFunc[h] = new TF1(Form("gaus_%d",h),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);    
     fFunc[h]->SetLineColor(prt_color[h]);
@@ -194,6 +191,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   
   int ntotal=0;  
   std::map<Int_t, std::vector<TVector3>> map_track_momenta;
+  std::map<Int_t, Int_t> map_track_pid;
   
   for (int ievent=0; ievent < nEvents; ievent++){
     fChain->GetEntry(ievent);
@@ -209,17 +207,27 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       {     
 	int photon_parent_track_id = track_id[h];
 	TVector3 photon_parent_mom_vec = track_momentum_at_bar[h];
+	int photon_parent_pid = track_pid[h];
 	//std::cout << "track id of parent = " << photon_parent_track_id << std::endl;
 	
-	map_track_momenta[photon_parent_track_id].push_back(photon_parent_mom_vec);	
+	map_track_momenta[photon_parent_track_id].push_back(photon_parent_mom_vec);
+	map_track_pid.insert({photon_parent_track_id, photon_parent_pid});
       }
+    /*if(ievent < 10)
+      {
+	for (auto itr = map_track_pid.begin(); itr != map_track_pid.end(); ++itr) {
+	  cout << "event \t track id \t pid \n";
+	  cout << ievent << "\t" << itr->first
+             << '\t' << itr->second << '\n';
+	}
+	}*/
     
     std::map<Int_t, std::vector<TVector3>>::iterator iter;
     
     std::vector<Int_t> vec_track_id;
     std::vector<TVector3> vec_avg_track_mom;
     
-    //if(ievent<20) std::cout << "number of charged tracks = " << map_track_momenta.size() << std::endl;
+    //if(ievent<10) std::cout << "number of charged tracks = " << map_track_momenta.size() << std::endl;
 
     for(iter = map_track_momenta.begin(); iter != map_track_momenta.end(); ++iter)
       {
@@ -242,8 +250,10 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       {
         for(int h=0; h<5; h++)
 	  {
-	    fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",160,-100,100);
+	    fLnDiff[h] = new TH1F(Form("LnDiff_%d",h),  ";ln L(K) - ln L(#pi);entries [#]",100,-60,60);
 	    fLnDiff[h]->SetLineColor(prt_color[h]);
+
+	    //fLnDiff_vs_theta[h] = new TH2F(Form("LnDiff_%d_vs_theta",h), ";#theta (deg); ln L(K) - ln L(#pi)",20, 30, 50, 160,-100,100);
 	  }
       }
     
@@ -259,23 +269,16 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     
     for(int i=0; i < vec_track_id.size(); i++)   
       {
-	int pid;
+	int charged_track_pid = map_track_pid[vec_track_id[i]];
+	int pid = prt_get_pid(charged_track_pid);
 	int tnph[5]={0};
 	
 	TVector3 mom_vec = vec_avg_track_mom[i];
 	//if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
-	if(mom_vec.Theta() < 29.5*TMath::DegToRad() || mom_vec.Theta() > 30.5*TMath::DegToRad()) 
-	  {
-	    if(ievent<10) 
-	      {
-		bkg_track_theta =  mom_vec.Theta()*TMath::RadToDeg();
-		//std::cout << "bkg track theta = " << bkg_track_theta << std::endl;
-	      }
-	    continue;
-	  }
-	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
-	//if(ievent < 50) mom_vec.Print();		
 
+	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
+	//if(ievent < 10) mom_vec.Print();		
+	//if(ievent < 10) std::cout << "event " << ievent << ": track id = " << vec_track_id[i] << ": pid " << pid << ": theta = " << mom_vec.Theta()*TMath::RadToDeg() << std::endl;
 	good_track_count++;
 	
 	int barbox_number = 0;
@@ -303,11 +306,6 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	  {      
 	    //if(track_id[h] != vec_track_id[i]) continue;
 	    if(track_pid[h] != 211 && track_pid[h] != 321) continue; 
-	    pid = prt_get_pid(track_pid[h]);
-	    //std::cout << "parent track pid of photon = " << track_pid[h] << std::endl; 
-	    //if(parent_track_momentum[h] < 5.5 || parent_track_momentum[h] > 6.5) continue; 
-	    //if(parent_track_momentum[h] > 5.5 && parent_track_momentum[h] < 6.5) continue;
-	    //if(parent_track_momentum[h] < 6.5) continue;
 	    
 	    //if(set_good_hits.find(h) != set_good_hits.end()) continue;
 	    
@@ -316,8 +314,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
 	    hitTime = lead_time[h] + prt_rand.Gaus(0,0.1);
 	    //lenz = 2555 + hit_pos[h][2]; // ECCE z-shift	    
-	    //lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
-	    lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - 30.0*TMath::DegToRad()));
+	    lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - mom_vec.Theta()));
+	    //lenz = 2555 + (729.6*TMath::Tan(TMath::Pi()/2 - 30.0*TMath::DegToRad()));
 	    dirz = hit_mom[h][2]; 
 
 	    int barId = bar_id[h];
@@ -441,7 +439,11 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
     double sum = sum1-sum2;
 
-    if(sum!=0) fLnDiff[pid]->Fill(sum);
+    if(sum!=0)
+      {
+	fLnDiff[pid]->Fill(sum);
+	//fLnDiff_vs_theta[pid]->Fill(mom_vec.Theta()*TMath::RadToDeg(), sum);
+      }
     if(tnph[pid]>1) hnph[pid]->Fill(tnph[pid]);    
   
     if(fVerbose==1){
@@ -462,6 +464,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       } // end of tracks loop
 
     map_track_momenta.clear();
+    map_track_pid.clear();
     vec_track_id.clear();
     vec_avg_track_mom.clear();
     //if(ievent < 100) std::cout << "size of set of good hits = " << set_good_hits.size() << " for " << good_track_count << " good tracks" << std::endl;
@@ -485,7 +488,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	nph_err[h] = f->GetParError(1);
 	sigma_nph[h] = f->GetParameter(2);
 	}
-
+    }
     
     theta = 30.0;
 
@@ -539,7 +542,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp1],spr[fp1],nph[fp1],nph_err[fp1])<<std::endl;
     std::cout<<Form("%3d : SPR = %2.2f N = %2.2f +/- %2.2f",prt_pdg[fp2],spr[fp2],nph[fp2],nph_err[fp2])<<std::endl;
     std::cout<<Form("SEP = %2.2f +/- %2.2f ",sep,sep_err)<<std::endl;  
-    }
+    
 
   if(!fVerbose) gROOT->SetBatch(1);
 
@@ -552,6 +555,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
   Hist_hit_pos_z->Write();
   Hist_time_diff->Write();
   Hist_lut_time->Write();
+  //fLnDiff_vs_theta[fp1]->Write();
+  //fLnDiff_vs_theta[fp2]->Write();
   
   //------------------------- canvas draw ----------------
   
@@ -593,8 +598,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       //pt->AddText(Form("N(#pi^{+}) = %1.2f #pm %1.2f",nph[fp2],nph_err[fp2]));
       ((TText*)pt->GetListOfLines()->Last())->SetTextColor(prt_color[fp2]);
       
-      pt->SetX1NDC(0.23);
-      pt->SetX2NDC(0.35);
+      pt->SetX1NDC(0.65);
+      pt->SetX2NDC(0.78);
       pt->SetY1NDC(0.65);
       pt->SetY2NDC(0.85);
       pt->SetShadowColor(0);
@@ -722,8 +727,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 
     //prt_canvasSave(filedir+"reco",0,0,0);
     
-    //prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",prt_theta), 0,0,0);
-    prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",bkg_track_theta), 0,0,0); 
+    prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",prt_theta), 0,0,0);
+    //prt_canvasSave(filedir + "/reco_plots/" + Form("%1.2f_deg",bkg_track_theta), 0,0,0); 
     if(fVerbose>2) prt_waitPrimitive("lh"+nid,"none");
     
   }

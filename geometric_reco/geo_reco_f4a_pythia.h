@@ -31,6 +31,7 @@ TH1F *hnph[5];
 double fAngle[5];
 TF1 *fFunc[5];
 TH1F *fLnDiff[5];
+TH2F *fLnDiff_vs_theta[5];
 double fCriticalAngle;
 TString fCorrFile;
 
