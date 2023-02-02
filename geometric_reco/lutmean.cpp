@@ -22,7 +22,7 @@ void lutmean(TString baseFile = "../data/lut"){
 
   TTree *fTreeNew = new TTree("prtlut","Look-up table for DIRC. Averaged");
 
-  Int_t Nnodes = 24*256;
+  Int_t Nnodes = 24*128;
 
   for(Int_t l=0; l < 10; l++){
     fLutNew[l] = new TClonesArray("PrtLutNode");

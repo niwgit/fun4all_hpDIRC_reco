@@ -7,6 +7,7 @@
 const int nch(24*256);
 TF1 *pdff[nch],*pdfs[nch];
 TH1F *hpdff[nch],*hpdfs[nch];
+double nhits_cut, nhits_cut_val;
 
 void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root", double timeres=0.1, int pid =3, TString nameid=""){
 
@@ -24,6 +25,11 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   }
   
   TFile f(pdf);
+  TTree *tree_nph = (TTree*) f.Get("nph_pip");
+  tree_nph->SetBranchAddress("nhits_cut",&nhits_cut);               
+  tree_nph->GetEntry(0);
+  nhits_cut_val = nhits_cut;
+  std::cout << "number of hits cut at " << nhits_cut_val << std::endl;
   
   int rebin=timeres/(100/2000.);
   std::cout<<"rebin "<<rebin <<std::endl;
@@ -55,7 +61,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   Double_t lead_time[arr_size];
 
   prt_ch->SetBranchAddress("nhits", &hit_size);
-  prt_ch->SetBranchAddress("pid", &Particle_id);
+  //prt_ch->SetBranchAddress("pid", &Particle_id);
   prt_ch->SetBranchAddress("theta", &theta_ang);  
   prt_ch->SetBranchAddress("mcp_id", &mcp_num);
   prt_ch->SetBranchAddress("pixel_id", &pixel_id);  
@@ -75,10 +81,15 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   for (int ievent=0; ievent < nEvents; ievent++)
     {
       prt_ch->GetEntry(ievent);
+
+      if(ievent < nEvents/2) Particle_id = 211;
+      else Particle_id = 321;
+
       //if((Particle_id == 211 && ievent > 499) || (Particle_id == 321 && ievent > 1499)) continue;
-      if((Particle_id == 211 && ievent > 4999) || (Particle_id == 321 && ievent > 24999)) continue;
+      if((Particle_id == 211 && ievent > 4999) || (Particle_id == 321 && ievent > 29999)) continue;
 
       int nHits = hit_size;
+      if(nHits < nhits_cut_val) continue;
       if(ievent%printstep==0 && ievent!=0) cout<< "Event # "<< ievent<< " # hits "<< nHits <<endl;
       
       int id = prt_get_pid(Particle_id);    

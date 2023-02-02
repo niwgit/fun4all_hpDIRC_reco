@@ -6,7 +6,7 @@ using namespace std;
 TClonesArray *fLutSum[10];
 void adddirs(TString);
 
-void lut_add(TString inFile = "l_b*_avr.root", TString outFile = "lut_all.root"){
+void lut_add(TString inFile = "l_b*_avr.root", TString outFile = "lut_all_16x8.root"){
   gROOT->ProcessLine(".L PrtLutNode.cxx+");
 
   TTree *fTreeNew = new TTree("prtlut","Look-up table for DIRC");
@@ -15,7 +15,7 @@ void lut_add(TString inFile = "l_b*_avr.root", TString outFile = "lut_all.root")
     fTreeNew->Branch(Form("LUT_%d",l),&fLutSum[l],256000,0); 
   }
 
-  Int_t Nnodes = 24*256;
+  Int_t Nnodes = 24*128;
   
   for(Int_t l=0; l < 10; l++){
     TClonesArray &fLutaSum = *fLutSum[l];

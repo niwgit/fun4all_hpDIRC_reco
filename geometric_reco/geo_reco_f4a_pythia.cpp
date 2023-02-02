@@ -1,8 +1,9 @@
-#include "geo_reco_f4a_pythia.h"
+//#include "geo_reco_f4a_pythia.h"
 #include <iostream>
-#include "../prttools/prttools.cpp"
-//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a_pythia.h"
-//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
+//#include "../prttools/prttools.cpp"
+#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/geo_reco_f4a_pythia.h"
+#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools.cpp"
+//#include "/work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/prttools/prttools_16x8.cpp"
 
 using namespace std;
 
@@ -12,8 +13,8 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 {
   fVerbose = verbose;
 
-  gROOT->ProcessLine(".L PrtLutNode.cxx+");
-  //gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
+  //gROOT->ProcessLine(".L PrtLutNode.cxx+");
+  gROOT->ProcessLine(".L /work/eic3/users/nwickjlb/hpDIRC_reco_test/fun4all_hpDIRC_reco/geometric_reco/PrtLutNode.cxx+");
   
   TH1F*  fHist1 = new TH1F("Time1","1", 1000,0,20);
   TH1F*  fHist2 = new TH1F("Time2","2", 1000,-10,10);
@@ -69,7 +70,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     hthetac[h]->SetLineColor(prt_color[h]);
     hthetacd[h] = new TH1F(Form("thetacd_%d",h),";#Delta#theta_{C} [mrad];entries [#]", 200,-60,60);
     hthetacd[h]->SetLineColor(prt_color[h]);
-    hnph[h] = new TH1F(Form("nph_%d",h),";detected photons [#];entries [#]", 300,0,300);
+    hnph[h] = new TH1F(Form("nph_%d",h),";detected photons [#];entries [#]", 200,0,200);
     hnph[h]->SetLineColor(prt_color[h]);
     fFunc[h] = new TF1(Form("gaus_%d",h),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);    
     fFunc[h]->SetLineColor(prt_color[h]);
@@ -102,7 +103,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
       fCorr[pmt] = (fabs(corr)<0.007)? corr: 0.00001;
       for (int h = 0; h < 5; h++) {
         fSigma[h] = 0.001 * fabs(cspr[h]) * 0.95;
-        if (fSigma[h] > 0.005) fSigma[h] = 0.005;
+        if (fSigma[h] > 0.01) fSigma[h] = 0.01;
       }
       std::cout << "pmt " << pmt << "  " << fCorr[pmt] << " spr = (2) " << fSigma[2] << "  (3) " << fSigma[3] << std::endl;
     }
@@ -198,9 +199,9 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
     int nHits = hit_size;
     if(ievent%500==0) std::cout<<"Event # "<< ievent << " has "<< nHits <<" hits"<<std::endl;
 
-    theta = 30.0;
+    //theta = 30.0;
     ntotal+=nHits;
-    prt_theta = theta;
+    //prt_theta = theta;
     mom = 6.0;
     
     for(int h=0; h < nHits; h++)
@@ -277,6 +278,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	//if(mom_vec.Theta() < 34.0*TMath::DegToRad() || mom_vec.Theta() > 46.0*TMath::DegToRad()) continue;
 
 	if(mom_vec.Mag() < 5.5 || mom_vec.Mag() > 6.5) continue;
+	if(ievent < 10) prt_theta = mom_vec.Theta()*TMath::RadToDeg();
 	//if(ievent < 10) mom_vec.Print();		
 	//if(ievent < 10) std::cout << "event " << ievent << ": track id = " << vec_track_id[i] << ": pid " << pid << ": theta = " << mom_vec.Theta()*TMath::RadToDeg() << std::endl;
 	good_track_count++;
@@ -322,6 +324,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	    int mcp = mcp_num[h];
 	    int pix = pixel_id[h];	
 	    int ch =  256*mcp + pix;
+	    //int ch =  128*mcp + pix;
       
 	    TVector3 hit_mom_vec = TVector3(hit_mom[h][0], hit_mom[h][1], hit_mom[h][2]);
 	    TVector3 dir0 = hit_mom_vec.Unit();      
@@ -430,6 +433,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	  nsHits++;
 	  tnph[pid]++;
 	  if(pid == 2) prt_hdigi[mcp]->Fill(pix%16, pix/16);
+	  //if(pid == 2) prt_hdigi[mcp]->Fill(pix%8, pix/8);
 	  Hist_parent_momentum->Fill(parent_track_momentum[h]);
 	  Hist_hit_pos_z->Fill(hit_pos[h][2]);
 	  Hist_time_diff->Fill(tdiff);
@@ -490,7 +494,7 @@ void geo_reco_f4a_pythia(TString infile, TString lutfile, TString filedir, int v
 	}
     }
     
-    theta = 30.0;
+    //theta = 30.0;
 
     TF1 *ff;
     double m1=0,m2=0,s1=0,s2=0,dm1=0,dm2=0,ds1=0,ds2=0;
