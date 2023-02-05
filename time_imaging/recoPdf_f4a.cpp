@@ -23,7 +23,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
     hnph[i]->SetLineColor(prt_color[i]);
     hll[i]->SetLineColor(prt_color[i]);
   }
-  
+
   TFile f(pdf);
   TTree *tree_nph = (TTree*) f.Get("nph_pip");
   tree_nph->SetBranchAddress("nhits_cut",&nhits_cut);               
@@ -53,20 +53,23 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   
   int hit_size = 0;
   int Particle_id = 0;
-  Double_t theta_ang = 0.;
+  //Double_t theta_ang = 0.;
 
   const int arr_size = 500;
 
   int mcp_num[arr_size], pixel_id[arr_size];
   Double_t lead_time[arr_size];
+  double track_momentum_at_bar[arr_size][3];
+  int track_id[arr_size];
 
   prt_ch->SetBranchAddress("nhits", &hit_size);
   //prt_ch->SetBranchAddress("pid", &Particle_id);
-  prt_ch->SetBranchAddress("theta", &theta_ang);  
+  //prt_ch->SetBranchAddress("theta", &theta_ang);  
   prt_ch->SetBranchAddress("mcp_id", &mcp_num);
   prt_ch->SetBranchAddress("pixel_id", &pixel_id);  
   prt_ch->SetBranchAddress("lead_time", &lead_time);
-  
+  prt_ch->SetBranchAddress("track_momentum_at_bar", &track_momentum_at_bar);
+
   int printstep=2000;
   double time = 0;
   
@@ -78,6 +81,8 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
 
   int tnph(0),totalf(0),totals(0), ch(0);
   
+  std::map<Int_t, std::vector<TVector3>> map_track_momenta;
+
   for (int ievent=0; ievent < nEvents; ievent++)
     {
       prt_ch->GetEntry(ievent);
@@ -89,11 +94,23 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
       if((Particle_id == 211 && ievent > 4999) || (Particle_id == 321 && ievent > 29999)) continue;
 
       int nHits = hit_size;
+
+      if(ievent < 10)
+	{
+	  TVector3 avg_track_momentum;
+	  for(int h=0; h < nHits; h++)
+	    {     
+	      TVector3 photon_parent_mom_vec = track_momentum_at_bar[h];
+	      avg_track_momentum += photon_parent_mom_vec;
+	    }
+	  prt_theta = avg_track_momentum.Theta()*TMath::RadToDeg();
+	}
+	
       if(nHits < nhits_cut_val) continue;
       if(ievent%printstep==0 && ievent!=0) cout<< "Event # "<< ievent<< " # hits "<< nHits <<endl;
       
       int id = prt_get_pid(Particle_id);    
-      prt_theta = theta_ang*TMath::RadToDeg();
+      //prt_theta = theta_ang*TMath::RadToDeg();
       double aminf,amins, sum(0),sumf(0),sums(0);
       tnph = 0;    
       if(hll[id]->GetEntries()>4000) continue;
@@ -119,7 +136,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
       sum = sumf-sums;
       if(fabs(sum)<0.1) continue;
         
-      hll[id]->Fill(sum);     
+      hll[id]->Fill(sum);      
     }
   
   gStyle->SetOptStat(0);
@@ -194,7 +211,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   
   std::cout<<in<<" separation "<< sep << "+/-" << sep_err << std::endl;
 
-  hll[2]->SetTitle(Form("#theta = %1.2f       #sigma = %1.2f #pm %1.2f",prt_theta, sep, sep_err));
+  hll[2]->SetTitle(Form("#theta = %1.2f deg       #sigma = %1.2f #pm %1.2f",prt_theta, sep, sep_err));
   hll[2]->Draw();
   hll[pid]->Draw("same");
 
@@ -211,8 +228,7 @@ void recoPdf_f4a(TString in="G4DIRCTree.root", TString pdf="G4DIRCTree.pdf.root"
   hl[pid]->Draw("same");
 
   prt_canvasSave("."+nameid,0);
-
-
+  
   TFile fc(in+"_r.root","recreate");
   TTree *tc = new TTree("reco","reco");
   tc->Branch("theta",&prt_theta,"theta/D");
